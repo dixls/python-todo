@@ -20,6 +20,9 @@ parser.add_argument(
     choices=statuses,
     help="give your item a status, to-do, in-progress, waiting, done",
 )
+parser.add_argument(
+    "-t", "--title", type=str, help="change the title of an item when editing"
+)
 parser.add_argument("-d", "--done", type=int, help="quickly mark an item done")
 
 
@@ -40,6 +43,7 @@ session = Session(bind=engine)
 
 args = parser.parse_args()
 
+spacing = "%4s %40s %10s %10s"
 
 if args.done:
     todo_item = session.query(Item).filter_by(id=args.done).first()
@@ -69,12 +73,19 @@ elif args.edit:
     if args.status:
         s = args.status
         todo_item.status = statuses.index(s)
+    if args.title:
+        todo_item.title = args.title
     session.add(todo_item)
     session.commit()
+    print(f"changed item {todo_item.id}")
 
 else:
     items = (
         session.query(Item).order_by(Item.status.desc()).order_by(Item.priority.desc())
     )
+    print(spacing % ("Id", "Title", "Priority", "Status"))
     for item in items:
-        print(item.id, item.title, priorities[item.priority], statuses[item.status])
+        print(
+            spacing
+            % (item.id, item.title, priorities[item.priority], statuses[item.status])
+        )
